@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../utils/api'; // ✅ using wrapper
+import { loginUser } from '../utils/api'; // Make sure this returns actual API result (axios/fetch)
 import '../src/index.css';
 
 const Login = () => {
@@ -8,6 +8,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = localStorage.getItem('baatchitUser');
+    if (user) {
+      navigate('/chat');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -19,15 +26,23 @@ const Login = () => {
     setError('');
 
     try {
-      const { data } = await loginUser(form); // using api.js
-      if (data.success) {
-        localStorage.setItem('baatchitUser', JSON.stringify(data.user));
+      const response = await loginUser(form);
+
+      // Ensure response is structured correctly
+      if (response?.success && response?.user) {
+        localStorage.setItem('baatchitUser', JSON.stringify(response.user));
         navigate('/chat');
       } else {
-        setError(data.message || 'Login failed');
+        const msg =
+          typeof response?.message === 'string'
+            ? response.message
+            : 'Invalid credentials or server error';
+        setError(msg);
       }
     } catch (err) {
-      setError('Invalid credentials');
+      const serverError =
+        err?.response?.data?.message || err?.message || 'Network error. Try again.';
+      setError(serverError);
     } finally {
       setLoading(false);
     }
@@ -56,7 +71,11 @@ const Login = () => {
           onChange={handleChange}
           required
         />
-        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+        <button
+          type="submit"
+          className={`btn w-full ${loading ? 'btn-disabled' : 'btn-primary'}`}
+          disabled={loading}
+        >
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
