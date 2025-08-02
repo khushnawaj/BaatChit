@@ -6,16 +6,27 @@ const connectDB = require('./config/database.js');
 const app = express();
 dotenv.config();
 connectDB();
-app.use(cors());
+
+// Enhanced CORS configuration
+const corsOptions = {
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.get("/", (req, res) => {
   res.send("Baat-Chit API working");
 });
 
-// Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-// app.use('/api/messages', require('./routes/message'));
+// Routes - properly mounted
+app.use('/auth', require('./routes/authRoutes'));
+app.use('/users', require('./routes/userRoutes'));
 
 module.exports = app;

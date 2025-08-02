@@ -1,24 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../utils/api'; // Make sure this returns actual API result (axios/fetch)
-import '../src/index.css';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { loginUser } from '../utils/api';
+import Loader from '../components/Loader';
 
-const Login = () => {
+export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const user = localStorage.getItem('baatchitUser');
-    if (user) {
-      navigate('/chat');
-    }
-  }, [navigate]);
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem('baatchitUser'));
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // Redirect only if user exists AND we're not already on /chat or login
+  if (user && window.location.pathname === '/login') {
+    navigate('/chat', { replace: true });
+  }
+}, []);
+
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,22 +28,21 @@ const Login = () => {
 
     try {
       const response = await loginUser(form);
-
-      // Ensure response is structured correctly
-      if (response?.success && response?.user) {
-        localStorage.setItem('baatchitUser', JSON.stringify(response.user));
+      
+      if (response.success) {
+        localStorage.setItem('baatchitUser', JSON.stringify({
+          ...response.user,
+          token: response.token
+        }));
         navigate('/chat');
       } else {
-        const msg =
-          typeof response?.message === 'string'
-            ? response.message
-            : 'Invalid credentials or server error';
-        setError(msg);
+        setError(response.message || 'Login failed');
       }
     } catch (err) {
-      const serverError =
-        err?.response?.data?.message || err?.message || 'Network error. Try again.';
-      setError(serverError);
+      const errorMsg = err.response?.data?.message || 
+                      err.message || 
+                      'Login failed. Please try again.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -50,8 +50,17 @@ const Login = () => {
 
   return (
     <div className="max-w-md mx-auto mt-24 bg-white p-6 rounded-lg shadow space-y-6">
-      <h2 className="text-2xl font-bold text-center">Login to Baat-Chit</h2>
-      {error && <p className="text-red-600 text-center">{error}</p>}
+      <h2 className="text-2xl font-bold text-center">Login to BaatChit</h2>
+      
+      {error && (
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
@@ -59,7 +68,7 @@ const Login = () => {
           placeholder="Email"
           className="input input-bordered w-full"
           value={form.email}
-          onChange={handleChange}
+          onChange={(e) => setForm({...form, email: e.target.value})}
           required
         />
         <input
@@ -68,19 +77,22 @@ const Login = () => {
           placeholder="Password"
           className="input input-bordered w-full"
           value={form.password}
-          onChange={handleChange}
+          onChange={(e) => setForm({...form, password: e.target.value})}
           required
         />
         <button
           type="submit"
-          className={`btn w-full ${loading ? 'btn-disabled' : 'btn-primary'}`}
+          className="btn btn-primary w-full"
           disabled={loading}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? <Loader /> : 'Login'}
         </button>
       </form>
+
+      <p className="text-center">
+        Don't have an account?{' '}
+        <Link to="/register" className="link link-primary">Register here</Link>
+      </p>
     </div>
   );
-};
-
-export default Login;
+}

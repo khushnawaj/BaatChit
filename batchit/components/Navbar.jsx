@@ -1,41 +1,84 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import '../src/index.css';
 
 function Navbar() {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('baatchitUser'));
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     localStorage.removeItem('baatchitUser');
-    window.location.href = '/login';
+    navigate('/login');
   };
 
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="navbar bg-base-100 px-4 border-b">
-      <div className="flex-1">
-        <Link to="/chat" className="text-xl font-bold">
-          Baat-Chit 💬
+    <nav className="navbar">
+      <div className="navbar-left">
+        <Link to="/chat" className="navbar-title">
+          <span>Baat-Chit</span>
+          <span role="img" aria-label="chat">💬</span>
         </Link>
       </div>
-      <div className="flex items-center space-x-3">
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full">
-              <img src={user?.profilePic} alt="user" />
-            </div>
+
+      <div className="navbar-right">
+        {user ? (
+          <div className="dropdown" ref={dropdownRef}>
+            <button className="avatar-btn" onClick={toggleDropdown}>
+              <img
+                src={user?.profilePic || 'https://via.placeholder.com/150'}
+                alt="user"
+                className="avatar-img"
+              />
+              <span>{user?.name}</span>
+            </button>
+            <ul className={`dropdown-menu ${isDropdownOpen ? 'show' : ''}`}>
+              <li>
+                <Link 
+                  to="/profile" 
+                  className="dropdown-link"
+                  onClick={() => setIsDropdownOpen(false)}
+                >
+                  Profile
+                </Link>
+              </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    handleLogout();
+                    setIsDropdownOpen(false);
+                  }} 
+                  className="dropdown-link logout-btn"
+                >
+                  Logout
+                </button>
+              </li>
+            </ul>
           </div>
-          <ul
-            tabIndex={0}
-            className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-40"
-          >
-            <li>
-              <Link to="/profile">Profile</Link>
-            </li>
-            <li>
-              <button onClick={handleLogout}>Logout</button>
-            </li>
-          </ul>
-        </div>
+        ) : (
+          <Link to="/login" className="btn btn-primary">Login</Link>
+        )}
       </div>
-    </div>
+    </nav>
   );
 }
 

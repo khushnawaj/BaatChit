@@ -4,6 +4,6 @@ const { getAllUsers } = require("../controllers/userController");
 const protect = require("../middlewares/authMiddlware");
 
 // Protected route
-router.get("/", protect, getAllUsers);
+router.get("/api", protect, getAllUsers);
 
 module.exports = router;

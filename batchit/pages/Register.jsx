@@ -1,79 +1,106 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { registerUser } from '../utils/api';
-import Loader from '../components/Loader';
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { registerUser } from '../utils/api'
+import Loader from '../components/Loader'
+import '../src/index.css'
 
 function Register() {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
     try {
-      const res = await registerUser(form);
-      if (res.success) {
-        navigate('/login');
+      const res = await registerUser(form)
+      if (res?.success) {
+        navigate('/login')
       } else {
-        setError(res.message || 'Registration failed');
+        setError(res.message || 'Registration failed')
       }
     } catch (err) {
-      setError('Server error');
+      setError(err.response?.data?.message || 'Server error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="w-full max-w-md bg-white p-8 rounded shadow space-y-4">
-      <h2 className="text-2xl font-bold text-center">Register for Baat-Chit</h2>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          className="input input-bordered w-full"
-          value={form.name}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          className="input input-bordered w-full"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          className="input input-bordered w-full"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
-        <button className="btn btn-success w-full" disabled={loading}>
-          {loading ? <Loader /> : 'Register'}
-        </button>
-      </form>
-      <p className="text-sm text-center">
-        Already have an account?{' '}
-        <Link to="/login" className="link text-blue-600">
-          Login
-        </Link>
-      </p>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h2 className="auth-title">Create Your Account</h2>
+        
+        {error && (
+          <div className="auth-error">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="name" className="form-label">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Enter your full name"
+              className="form-input"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="Enter your email"
+              className="form-input"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Create a password"
+              className="form-input"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <button type="submit" className="auth-submit-btn" disabled={loading}>
+            {loading ? <Loader /> : 'Register'}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Already have an account?{' '}
+          <Link to="/login" className="auth-link">
+            Sign in
+          </Link>
+        </div>
+      </div>
     </div>
-  );
+  )
 }
 
-export default Register;
+export default Register
